@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:proto_client/utils/enum.dart';
 
 import 'api/unsplash_api_service.dart';
 import 'bloc/photo_bloc.dart';
 import 'bloc/simple_bloc_observer.dart';
 import 'constants.dart';
+import 'utils/enum.dart';
 import 'widgets/bottom_loader.dart';
 
 void main() {
