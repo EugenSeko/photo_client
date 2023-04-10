@@ -7,6 +7,7 @@ import 'bloc/simple_bloc_observer.dart';
 import 'constants.dart';
 import 'utils/enum.dart';
 import 'widgets/bottom_loader.dart';
+import 'widgets/photo_screen.dart';
 
 void main() {
   Bloc.observer = const SimpleBlocObserver();
@@ -89,8 +90,24 @@ class _PhotosListState extends State<PhotosList> {
               itemBuilder: (BuildContext context, int index) {
                 return index >= state.photos.length
                     ? const BottomLoader()
-                    : Image.network(state.photos[index].urls[Constants.smallS3],
-                        fit: BoxFit.cover);
+                    : GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PhotoScreen(
+                                  imageUrl:
+                                      state.photos[index].urls[Constants.full]),
+                            ),
+                          );
+                        },
+                        child: Image.network(
+                          state.photos[index].urls[Constants.smallS3],
+                          fit: BoxFit.cover,
+                        ),
+                      );
+                // : Image.network(photoUrl,
+                //     fit: BoxFit.cover);
               },
               itemCount: state.hasReachedMax
                   ? state.photos.length
