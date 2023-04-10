@@ -9,15 +9,20 @@ class PhotoScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: GestureDetector(
-        onTap: () => Navigator.pop(context),
+      body: Dismissible(
+        key: const ValueKey('dismiss_key'),
+        direction: DismissDirection.down,
+        onDismissed: (_) => Navigator.pop(context),
         child: Container(
           color: Colors.black,
-          child: PhotoView(
-            imageProvider: NetworkImage(imageUrl),
-            minScale: PhotoViewComputedScale.contained * 0.8,
-            maxScale: PhotoViewComputedScale.covered * 2,
-            initialScale: PhotoViewComputedScale.contained,
+          child: Hero(
+            tag: imageUrl,
+            child: PhotoView(
+              imageProvider: NetworkImage(imageUrl),
+              minScale: PhotoViewComputedScale.contained * 0.8,
+              maxScale: PhotoViewComputedScale.covered * 2,
+              initialScale: PhotoViewComputedScale.contained,
+            ),
           ),
         ),
       ),

@@ -96,14 +96,17 @@ class _PhotosListState extends State<PhotosList> {
                             context,
                             MaterialPageRoute(
                               builder: (context) => PhotoScreen(
-                                  imageUrl:
-                                      state.photos[index].urls[Constants.full]),
+                                  imageUrl: state
+                                      .photos[index].urls[Constants.regular]),
                             ),
                           );
                         },
-                        child: Image.network(
-                          state.photos[index].urls[Constants.smallS3],
-                          fit: BoxFit.cover,
+                        child: Hero(
+                          tag: state.photos[index].urls[Constants.regular],
+                          child: Image.network(
+                            state.photos[index].urls[Constants.thumb],
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       );
                 // : Image.network(photoUrl,
