@@ -40,7 +40,7 @@ class PhotosPage extends StatelessWidget {
       builder: (context, state) {
         return Scaffold(
           appBar: AppBar(
-            leading: Text('Page : ${state.pageNumber}'),
+            leading: const Text('Page : 0'),
             title: TextField(
               controller: TextEditingController(),
               decoration: const InputDecoration(
@@ -66,6 +66,7 @@ class PhotosList extends StatefulWidget {
 
 class _PhotosListState extends State<PhotosList> {
   final _scrollController = ScrollController();
+  bool isSearch = false;
 
   @override
   void initState() {
@@ -77,6 +78,7 @@ class _PhotosListState extends State<PhotosList> {
   Widget build(BuildContext context) {
     return BlocBuilder<PhotoBloc, PhotoState>(
       builder: (context, state) {
+        isSearch = state.isSearch;
         switch (state.status) {
           case PhotoStatus.failure:
             return const Center(child: Text('failed to fetch posts'));
@@ -109,8 +111,6 @@ class _PhotosListState extends State<PhotosList> {
                           ),
                         ),
                       );
-                // : Image.network(photoUrl,
-                //     fit: BoxFit.cover);
               },
               itemCount: state.hasReachedMax
                   ? state.photos.length
@@ -133,7 +133,13 @@ class _PhotosListState extends State<PhotosList> {
   }
 
   void _onScroll() {
-    if (_isBottom) context.read<PhotoBloc>().add(PhotoFetched());
+    if (_isBottom) {
+      if (isSearch) {
+        context.read<PhotoBloc>().add(PhotoSearched(null));
+      } else {
+        context.read<PhotoBloc>().add(PhotoFetched());
+      }
+    }
   }
 
   bool get _isBottom {

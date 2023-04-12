@@ -6,15 +6,13 @@ import '../models/photo.dart';
 class UnsplashApiService {
   final _dio = Dio();
 
-  Future<List<Photo>> getPhotos({
-    String? query,
+  Future<List<Photo>> searchPhotos({
+    required String? query,
     int? page,
     int? perPage,
   }) async {
-    final hasQuery = !(query == null || query.isEmpty);
-    final url = hasQuery
-        ? '${Constants.baseUrl}/search/photos'
-        : '${Constants.baseUrl}/photos';
+    const url = '${Constants.baseUrl}/search/photos';
+
     try {
       final response = await _dio.get(url, queryParameters: {
         'query': query,
@@ -24,7 +22,7 @@ class UnsplashApiService {
       });
 
       if (response.statusCode == 200) {
-        return mapResponse(response, hasQuery);
+        return mapResponse(response);
       }
       throw Exception('error fetching posts');
     } catch (error) {
@@ -32,9 +30,31 @@ class UnsplashApiService {
     }
   }
 
-  List<Photo> mapResponse(Response<dynamic> response, bool hasQuery) {
-    List<dynamic> dynamicList =
-        hasQuery ? response.data['results'] as List : response.data as List;
+  Future<List<Photo>> getPhotos({
+    int? page,
+    int? perPage,
+  }) async {
+    const url = '${Constants.baseUrl}/photos';
+    try {
+      final response = await _dio.get(url, queryParameters: {
+        'client_id': Constants.apiKey,
+        'page': page,
+        'per_page': perPage,
+      });
+
+      if (response.statusCode == 200) {
+        return mapResponse(response);
+      }
+      throw Exception('error fetching posts');
+    } catch (error) {
+      return List.empty();
+    }
+  }
+
+  List<Photo> mapResponse(Response<dynamic> response) {
+    List<dynamic> dynamicList = response.data is Map
+        ? response.data['results'] as List
+        : response.data as List;
     List<Photo> photos = dynamicList
         .map((photo) => Photo(
             id: photo['id'] as String,

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:proto_client/main.dart';
 import 'package:stream_transform/stream_transform.dart';
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:bloc/bloc.dart';
@@ -28,22 +29,42 @@ class PhotoBloc extends Bloc<PhotoEvent, PhotoState> {
         transformer: throttleDroppable(throttleDuration));
   }
   final UnsplashApiService apiService;
+  String? query;
 
   Future<void> _onPhotoSearchedEvent(
       PhotoSearched event, Emitter<PhotoState> emit) async {
-    state.photos.clear();
-    final photos = await _fetchPhotos(query: event.query);
-    return emit(state.copyWith(
-      status: PhotoStatus.success,
-      photos: photos,
-      hasReachedMax: false,
-      pageNumber: _pageNumber,
-    ));
+    try {
+      if (event.query != null) {
+        query = event.query;
+        if (state.photos.isNotEmpty) {
+          state.photos.clear();
+        }
+        final photos = await _fetchPhotos(query: query);
+        return emit(state.copyWith(
+          searchStatus: SearchStatus.success,
+          photos: photos,
+          hasReachedMax: false,
+          isSearch: true,
+        ));
+      }
+
+      if (state.hasReachedMax) return;
+
+      final photos = await _fetchPhotos(query: query);
+      emit(photos.isEmpty
+          ? state.copyWith(
+              hasReachedMax: true,
+            )
+          : state.copyWith(
+              photos: List.of(state.photos)..addAll(photos),
+            ));
+    } catch (_) {
+      emit(state.copyWith(status: PhotoStatus.failure));
+    }
   }
 
   FutureOr<void> _onPhotoFeatchedEvent(
       PhotoFetched event, Emitter<PhotoState> emit) async {
-    if (state.hasReachedMax) return;
     try {
       if (state.status == PhotoStatus.initial) {
         final photos = await _fetchPhotos();
@@ -51,9 +72,10 @@ class PhotoBloc extends Bloc<PhotoEvent, PhotoState> {
           status: PhotoStatus.success,
           photos: photos,
           hasReachedMax: false,
-          pageNumber: _pageNumber,
         ));
       }
+      if (state.hasReachedMax) return;
+
       final photos = await _fetchPhotos();
       emit(photos.isEmpty
           ? state.copyWith(hasReachedMax: true)
@@ -61,7 +83,6 @@ class PhotoBloc extends Bloc<PhotoEvent, PhotoState> {
               status: PhotoStatus.success,
               photos: List.of(state.photos)..addAll(photos),
               hasReachedMax: false,
-              pageNumber: _pageNumber,
             ));
     } catch (_) {
       emit(state.copyWith(status: PhotoStatus.failure));
@@ -69,10 +90,19 @@ class PhotoBloc extends Bloc<PhotoEvent, PhotoState> {
   }
 
   int _pageNumber = 0;
+  int _searchPageNumber = 0;
 
   Future<List<Photo>> _fetchPhotos({String? query}) async {
     _pageNumber++;
-    return await apiService.getPhotos(
+    if (query == null) {
+      _pageNumber++;
+      return await apiService.getPhotos(
+        page: _pageNumber,
+        perPage: 20,
+      );
+    }
+    _searchPageNumber++;
+    return await apiService.searchPhotos(
       query: query,
       page: _pageNumber,
       perPage: 20,
